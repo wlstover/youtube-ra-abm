@@ -1,0 +1,4 @@
+*.csv
+*.do
+*.rtf
+__pycache__/*

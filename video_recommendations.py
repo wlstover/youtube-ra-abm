@@ -18,7 +18,7 @@ class Watcher(Agent):
         self.step_number = 0
         self.acuity = random.choice(range(0,101))
         self.recommender_trust = random.choice(range(0,101))
-        self.patience = 3
+        self.patience = random.choice(range(1,6))
             
     def softmax(self, x):
         return np.exp(x) / np.sum(np.exp(x), axis=0)

@@ -1,6 +1,7 @@
 from mesa import Agent, Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
+from mesa.datacollection import DataCollector
 import random
 import numpy as np
 import pandas as pd
@@ -121,6 +122,7 @@ class Watcher(Agent):
                     cost = agent.cost
                     payoff = prize - cost
                     self.payoffs.append(payoff)
+                    print(self.payoffs[-1])
                 
     def calculate_average_payoff(self):
         self.past_average_payoff = self.average_payoff
@@ -239,6 +241,9 @@ class VideoRecommendationsModel(Model):
         self.recommender = Recommender("recommender", self, recommender_type)
         self.random_recommendation_treatment = False
         self.highest_value_recommendation_treatment = True
+        self.datacollector = DataCollector(
+        agent_reporters={"payoff_sum": lambda a: sum(a.payoffs) if isinstance(a, Watcher) else None})
+                             
         
         for i in range(num_agents):
             uid = f"watcher_{i}"
@@ -332,8 +337,8 @@ class VideoRecommendationsModel(Model):
             else:
                 break
 
-        print("Total prize:", total_prize)
-        print("Total cost:", total_cost)
+        # print("Total prize:", total_prize)
+        # print("Total cost:", total_cost)
         
         net_gain = total_prize - total_cost
         return net_gain
@@ -345,6 +350,10 @@ class VideoRecommendationsModel(Model):
 
     def step(self):
         self.schedule.step()
+        watcher_payoffs =[sum(agent.payoffs) for agent in self.schedule.agents if isinstance(agent, Watcher) and agent.payoffs]
+        if watcher_payoffs:
+            self.sum_payoff = sum(watcher_payoffs) / len(watcher_payoffs)
+        self.datacollector.collect(self)
 
     def report_Agent_Locations(self):
         for agent in self.schedule.agents:
@@ -361,4 +370,4 @@ class VideoRecommendationsModel(Model):
             if isinstance(a, Video):
                 agent_pos = a.__dict__['pos']
                 agent_id = a.__dict__['unique_id']
-                print(agent_id, agent_pos, a.prize, a.cost)
+              #  print(agent_id, agent_pos, a.prize, a.cost)

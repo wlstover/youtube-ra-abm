@@ -1,5 +1,7 @@
 from video_recommendations import VideoRecommendationsModel, Watcher
 import pandas as pd
+from mesa.visualization.modules import CanvasGrid
+from mesa.visualization.ModularVisualization import ModularServer
 
 if __name__ == "__main__":
     width = 20
@@ -11,6 +13,18 @@ if __name__ == "__main__":
     search_costs = [(101 - i) for i in video_values]
     video_boxes = list(zip(video_values, search_costs))
     
+    def agent_portrayal(agent):
+        portrayal = {"Shape": "circle",
+                    "Filled": "true",
+                    "r": 0.5}
+
+        if isinstance(agent, Watcher):
+            portrayal["Color"] = "red"
+        else:
+            portrayal["Color"] = "blue"
+
+        return portrayal
+    
     agent_payoff_df = pd.DataFrame(columns=['final_payoff', 'uid', 'patience', 'step_number', 'acuity', 'recommender_trust', 'recommender_hv', 'recommender_random',  'optimal_search_value'])
     
     for treatment in ['no_recommend', 'high_value', 'random']:
@@ -19,6 +33,15 @@ if __name__ == "__main__":
 
             model = VideoRecommendationsModel(width, height, num_agents, treatment)
 
+            # Define the visualization elements
+            grid = CanvasGrid(agent_portrayal, width, height, 500, 500)
+            server = ModularServer(VideoRecommendationsModel,
+                       [grid],
+                       "Video Recommendations Model",
+                       {"width": width, "height": height, "num_agents": num_agents, "recommender_type": treatment})
+            
+            server.launch()
+            
             while model.running == True:
                 for i in range(num_steps):
                     if any(isinstance(a, Watcher) for a in model.schedule.agents):
@@ -41,8 +64,3 @@ if __name__ == "__main__":
     agent_payoff_df.to_csv('recommender_abm_results.csv')
                 
             #print(f'Iterating model to step {i}')
-    
-   
-        
-
-

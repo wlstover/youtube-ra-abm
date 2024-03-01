@@ -159,6 +159,9 @@ class Watcher(Agent):
                         self.recommender_trust += self.recommender_trust_step
                     elif payoff < 0 and agent.recommended == True:
                         self.recommender_trust -= self.recommender_trust_step
+                        
+                    if self.recommender_trust >= 100:
+                        self.recommender_trust = 100
 
                     self.payoffs.append(payoff)
                   #  print(self.payoffs[-1])

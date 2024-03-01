@@ -13,11 +13,12 @@ from video import Video
 from recommender import Recommender
         
 class VideoRecommendationsModel(Model):
-    def __init__(self, width, height, num_agents, recommender_acuity, recommender_trust_step):
+    def __init__(self, width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step):
         super().__init__()
         self.num_agents = num_agents
         self.recommender_acuity = recommender_acuity
         self.recommender_trust_step = recommender_trust_step
+        self.agent_acuity_floor = agent_acuity_floor
         self.search_quality = 0
         self.searcher_search_quality = 0
         self.mimic_search_quality = 0
@@ -35,7 +36,7 @@ class VideoRecommendationsModel(Model):
         
         for i in range(num_agents):
             uid = f"watcher_{i}"
-            agent = Watcher(uid, self, self.recommender_trust_step)
+            agent = Watcher(uid, self, self.agent_acuity_floor, self.recommender_trust_step)
             self.schedule.add(agent)
 
             x = random.randrange(self.grid.width)

@@ -40,7 +40,8 @@ class VideoRecommendationsModel(Model):
         model_reporters={"mimic_search_quality": self.compute_average_mimic_search_quality,
                             "searcher_search_quality": self.compute_average_searcher_search_quality, 
                             "percent_recommended": self.compute_percent_recommended,
-                            "percent_videos_recommended_chosen": self.compute_percent_videos_recommended_chosen,}
+                            "percent_videos_recommended_chosen": self.compute_percent_videos_recommended_chosen,
+                            "recommender_trust": self.compute_average_recommender_trust},
     )
         
         
@@ -199,7 +200,7 @@ class VideoRecommendationsModel(Model):
     
     def compute_average_recommender_trust(model):
         recommender_trust = [agent.recommender_trust for agent in model.schedule.agents if isinstance(agent, Watcher)]
-        return sum(recommender_trust) / len(recommender_trust)
+        return (sum(recommender_trust) / len(recommender_trust)) / 100
     
     def compute_percent_videos_recommended_chosen(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Watcher)]

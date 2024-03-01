@@ -186,12 +186,21 @@ class VideoRecommendationsModel(Model):
 
     def compute_average_mimic_search_quality(model):
         mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
-        return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
+        mimic_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
+        if mimic_pop == 0:
+            return 0
+        else:
+            return sum(mimic_search_qualities) / mimic_pop
     
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
-        return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
+        searcher_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
+        
+        if searcher_pop == 0:
+            return 0
+        else:
+            return sum(searcher_search_qualities) / searcher_pop
     
     def compute_percent_recommended(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]

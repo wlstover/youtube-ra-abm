@@ -23,16 +23,25 @@ class VideoRecommendationsModel(Model):
         self.searcher_search_quality = 0
         self.mimic_search_quality = 0
         self.percent_recommended = 0
+        self.recommender_trust = 0
         self.video_boxes = self.genVideoBoxes(400)
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
         self.final_payoffs = []
         self.running = True
         self.recommender = Recommender("recommender", self, self.recommender_acuity)
+        # self.datacollector = DataCollector(
+        #      {"search_quality": "search_quality",
+        #       "searcher_search_quality": "searcher_search_quality",
+        #       "mimic_search_quality": "mimic_search_quality",
+        #       "percent_recommended": "percent_recommended",
+        #       "recommender_trust": "recommender_trust"})
         self.datacollector = DataCollector(
-             {"search_quality": "search_quality",
-              "searcher_search_quality": "searcher_search_quality",
-              "mimic_search_quality": "mimic_search_quality"})
+        model_reporters={"mimic_search_quality": self.compute_average_mimic_search_quality,
+                            "searcher_search_quality": self.compute_average_searcher_search_quality, 
+                            "percent_recommended": self.compute_percent_recommended}
+    )
+        
         
         for i in range(num_agents):
             uid = f"watcher_{i}"
@@ -151,6 +160,8 @@ class VideoRecommendationsModel(Model):
         #          agent.calculate_search_quality()
         # if watcher_payoffs:
         #     self.sum_payoff = sum(watcher_payoffs) / len(watcher_payoffs)
+        
+    
         self.datacollector.collect(self)
      #   print(self.datacollector.get_agent_vars_dataframe())
 
@@ -170,3 +181,20 @@ class VideoRecommendationsModel(Model):
                 agent_pos = a.__dict__['pos']
                 agent_id = a.__dict__['unique_id']
               #  print(agent_id, agent_pos, a.prize, a.cost)
+
+    def compute_average_mimic_search_quality(model):
+        mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
+        return sum(mimic_search_qualities) / len(mimic_search_qualities)
+    
+    def compute_average_searcher_search_quality(model):
+        searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
+        return sum(searcher_search_qualities) / len(searcher_search_qualities)
+    
+    def compute_percent_recommended(model):
+        recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]
+        number_of_videos = len([agent for agent in model.schedule.agents if isinstance(agent, Video)])
+        return len(recommended_videos) / number_of_videos
+    
+    def compute_average_recommender_trust(model):
+        recommender_trust = [agent.recommender_trust for agent in model.schedule.agents if isinstance(agent, Watcher)]
+        return sum(recommender_trust) / len(recommender_trust)

@@ -49,7 +49,7 @@ class VideoRecommendationsModel(Model):
         
         for i in range(num_agents):
             uid = f"watcher_{i}"
-            agent = Watcher(uid, self, self.agent_acuity_floor, self.recommender_trust_step)
+            agent = Watcher(uid, self, self.agent_acuity_floor, self.recommender_trust_step, self.agent_search_cost)
             self.schedule.add(agent)
 
             x = random.randrange(self.grid.width)
@@ -150,25 +150,25 @@ class VideoRecommendationsModel(Model):
         total_cost = 0
 
         # Calculate initial reservation prices
-        vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(row['cost'], row['mean'], row['std_dev'], x_S), axis=1)
+        vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(self.agent_search_cost, row['prize_mean'], row['prize_std_dev'], x_S), axis=1)
 
         while not vdf.empty:
             # Find the box with the lowest reservation price
             min_price_row = vdf.loc[vdf['reservation_price'].idxmin()]
 
             # If the reservation price is less than or equal to the mean value in the box, open the box
-            if min_price_row['reservation_price'] <= min_price_row['mean']:
+            if min_price_row['reservation_price'] <= min_price_row['prize_mean']:
                 # Add value in box to list of already opened boxes
-                x_S.append(min_price_row['mean'])
+                x_S.append(min_price_row['prize_mean'])
 
                 # Add cost of opening box to total cost
-                total_cost += min_price_row['cost']
+                total_cost += self.agent_search_cost
 
                 # Remove box from dataframe
                 vdf.drop(min_price_row.name, inplace=True)
 
                 # Update reservation prices for remaining boxes
-                vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(row['cost'], row['mean'], row['std_dev'], x_S), axis=1)
+                vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(self.agent_search_cost, row['prize_mean'], row['prize_std_dev'], x_S), axis=1)
             else:
                 # If the reservation price is greater than the mean value in the box, don't open the box
                 vdf.drop(min_price_row.name, inplace=True)

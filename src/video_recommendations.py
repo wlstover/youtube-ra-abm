@@ -39,7 +39,8 @@ class VideoRecommendationsModel(Model):
         self.datacollector = DataCollector(
         model_reporters={"mimic_search_quality": self.compute_average_mimic_search_quality,
                             "searcher_search_quality": self.compute_average_searcher_search_quality, 
-                            "percent_recommended": self.compute_percent_recommended}
+                            "percent_recommended": self.compute_percent_recommended,
+                            "percent_videos_recommended_chosen": self.compute_percent_videos_recommended_chosen,}
     )
         
         
@@ -184,11 +185,12 @@ class VideoRecommendationsModel(Model):
 
     def compute_average_mimic_search_quality(model):
         mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
-        return sum(mimic_search_qualities) / len(mimic_search_qualities)
+        return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
+    
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
-        return sum(searcher_search_qualities) / len(searcher_search_qualities)
+        return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
     
     def compute_percent_recommended(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]
@@ -198,3 +200,12 @@ class VideoRecommendationsModel(Model):
     def compute_average_recommender_trust(model):
         recommender_trust = [agent.recommender_trust for agent in model.schedule.agents if isinstance(agent, Watcher)]
         return sum(recommender_trust) / len(recommender_trust)
+    
+    def compute_percent_videos_recommended_chosen(model):
+        recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Watcher)]
+        total_videos_chosen = sum([agent.videos_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
+        total_recommended_videos_chosen = sum([agent.recommended_videos_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
+        if total_videos_chosen == 0:
+            return 0
+        else:
+            return total_recommended_videos_chosen / total_videos_chosen

@@ -22,6 +22,8 @@ class Watcher(Agent):
         self.acuity = random.choice(range(self.acuity_floor,101))
         self.recommender_trust = random.choice(range(0,101))
         self.recommender_trust_step = recommender_trust_step
+        self.recommended_videos_chosen_count = 0
+        self.videos_chosen_count = 0
         self.type = random.choice(['searcher', 'mimic'])
         self.patience = 100
         self.search_quality = 0
@@ -92,9 +94,12 @@ class Watcher(Agent):
                         
                 if random.choice(range(1,101)) < self.recommender_trust:
                     new_position = recommended_video.pos
+                    self.recommended_videos_chosen_count += 1
                 # print('Following algorithm recommendation')
                 else:
                     new_position = step_choice
+                    
+                self.videos_chosen_count += 1
                 # print('Going with my choice')
                             
                 # new_position = random.choice(possible_steps)

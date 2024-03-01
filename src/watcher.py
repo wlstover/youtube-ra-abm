@@ -81,21 +81,16 @@ class Watcher(Agent):
                 video_choice = [v for v in possible_videos if (v.prize - v.cost) == watcher_video_choice][0]
                 step_choice = [step for step in possible_steps if step == video_choice.pos][0]
                 
-                if self.model.recommender.recommender_type != 'no_recommend':
-                    self.get_recommendation(possible_steps)
-                    recommended_video = [v for v in possible_videos if v.recommended == True][0]
-                    
-                    # for v in possible_videos:
-                    #     if v.recommended == True:
-                    #         print(f'{v.unique_id} at {v.pos} has been recommended by the algorithm')
-                            
-                    if random.choice(range(1,101)) < self.recommender_trust:
-                        new_position = recommended_video.pos
-                    # print('Following algorithm recommendation')
-                    else:
-                        new_position = step_choice
-                    # print('Going with my choice')
+                self.get_recommendation(possible_steps)
+                recommended_video = [v for v in possible_videos if v.recommended == True][0]
                 
+                # for v in possible_videos:
+                #     if v.recommended == True:
+                #         print(f'{v.unique_id} at {v.pos} has been recommended by the algorithm')
+                        
+                if random.choice(range(1,101)) < self.recommender_trust:
+                    new_position = recommended_video.pos
+                # print('Following algorithm recommendation')
                 else:
                     new_position = step_choice
                 # print('Going with my choice')
@@ -190,16 +185,6 @@ class Watcher(Agent):
         last_video.likes += 1
                 
     def calculate_stopping_point(self):
-        
-        if self.model.recommender.recommender_type == 'no_recommend':
-            recommender_hv = 0
-            recommender_random = 0
-        elif self.model.recommender.recommender_type == 'high_value':
-            recommender_hv = 1
-            recommender_random = 0
-        else:
-            recommender_hv = 0
-            recommender_random = 1
             
         steps = self.model.grid.get_neighborhood(
             self.pos,
@@ -209,16 +194,16 @@ class Watcher(Agent):
         
         if possible_steps == []:
             #print("I've run out of videos in my neighborhood to search, so I'm all done.")
-            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, recommender_hv, recommender_random, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
+            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, self.model.recommender_acuity, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
             self.model.schedule.remove(self)
         
         elif self.payoff_direction == self.patience:
             #print("I have done really well so far and think it is a good time to stop.")
-            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, recommender_hv, recommender_random, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
+            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, self.model.recommender_acuity, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
             self.model.schedule.remove(self)
             
         elif self.payoff_direction == -self.patience:
-            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, recommender_hv, recommender_random, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
+            self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, self.model.recommender_acuity, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
             self.model.schedule.remove(self)
           #  print("Time to cut my losses and stop watching stuff")
         

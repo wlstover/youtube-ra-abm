@@ -13,9 +13,10 @@ from video import Video
 from recommender import Recommender
         
 class VideoRecommendationsModel(Model):
-    def __init__(self, width, height, num_agents, recommender_type):
+    def __init__(self, width, height, num_agents, recommender_acuity):
         super().__init__()
         self.num_agents = num_agents
+        self.recommender_acuity = recommender_acuity
         self.search_quality = 0
         self.searcher_search_quality = 0
         self.mimic_search_quality = 0
@@ -25,9 +26,7 @@ class VideoRecommendationsModel(Model):
         self.schedule = RandomActivation(self)
         self.final_payoffs = []
         self.running = True
-        self.recommender = Recommender("recommender", self, recommender_type)
-        self.random_recommendation_treatment = False
-        self.highest_value_recommendation_treatment = True
+        self.recommender = Recommender("recommender", self, self.recommender_acuity)
         self.datacollector = DataCollector(
              {"search_quality": "search_quality",
               "searcher_search_quality": "searcher_search_quality",

@@ -16,15 +16,15 @@ class Recommender(Agent):
     def softmax(self, x):
         return np.exp(x) / np.sum(np.exp(x), axis=0)
         
-    def generate_recommendation(self, possible_steps):
+    def generate_recommendation(self, possible_steps, video_rps):
         #for coords in agent_neighborhood:
         
         videos = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos in possible_steps]
-        video_payoffs = [(video.prize - video.cost) for video in videos]
         
-        video_payoff_dict = dict(zip(video_payoffs, videos))
         
-        choice_set = video_payoffs
+        video_payoff_dict = dict(zip(video_rps, videos))
+        
+        choice_set = video_rps
         
         if len(choice_set) > 1:
         

@@ -7,16 +7,18 @@ import random
 import numpy as np
 import pandas as pd
 import itertools
+from scipy.optimize import minimize_scalar
 
 from watcher import Watcher
 from video import Video
 from recommender import Recommender
         
 class VideoRecommendationsModel(Model):
-    def __init__(self, width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step):
+    def __init__(self, width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step, agent_search_cost):
         super().__init__()
         self.num_agents = num_agents
         self.recommender_acuity = recommender_acuity
+        self.agent_search_cost = agent_search_cost
         self.recommender_trust_step = recommender_trust_step
         self.agent_acuity_floor = agent_acuity_floor
         self.search_quality = 0
@@ -55,7 +57,7 @@ class VideoRecommendationsModel(Model):
             self.grid.place_agent(agent, (x, y))
         
        # self.video_boxes
-        video_boxes_zip = list(zip(self.video_boxes['prize'], self.video_boxes['cost']))
+        video_boxes_zip = list(zip(self.video_boxes['prize_mean'], self.video_boxes['prize_std_dev']))
         
        # print(video_boxes_zip)
         x_locations = range(self.grid.width)
@@ -89,8 +91,7 @@ class VideoRecommendationsModel(Model):
         
     def calculateOptimalSearchValue(self, video_boxes):
         return self.solveVideoBoxes(video_boxes)
-
-
+        
     def genVideoBoxes(self, n_boxes):
 
         import numpy as np
@@ -101,58 +102,82 @@ class VideoRecommendationsModel(Model):
 
         # Define number of boxes
 
-        # Define mean and standard deviation for prize and cost distributions
-        prize_mean = 100
-        prize_std = 20
-        cost_mean = 10
-        cost_std = 2
+        # Generate 10 mean values that increase exponentially from 20 to 110
+        prize_means = np.logspace(np.log10(20), np.log10(110), num=n_boxes)
 
-        # Generate prizes and costs
-        prizes = np.random.normal(prize_mean, prize_std, n_boxes)
-        costs = np.random.normal(cost_mean, cost_std, n_boxes)
+        # Generate 10 standard deviations that range from 5 to 50
+        prize_stds = np.linspace(1, 3, num=n_boxes)
+        
+        #   # Generate 10 mean values that increase exponentially from 20 to 110
+        # cost_means = np.logspace(np.log10(20), np.log10(110), num=n_boxes)
 
-        # Make sure that costs and prizes are not negative
-        costs = np.abs(costs)
-        prizes = np.abs(prizes)
+        # # Generate 10 standard deviations that range from 5 to 50
+        # cost_stds = np.linspace(1, 3, num=n_boxes)
 
-        # Create a DataFrame for better data management
-        df = pd.DataFrame({
-            'prize': prizes,
-            'cost': costs
-        })
+        # Combine the mean values and standard deviations into a list of boxes
+        boxes = list(zip(prize_means, prize_stds))
+
+        box_df = pd.DataFrame(boxes, columns=['prize_mean', 'prize_std_dev'])
         
         #print(df)
-        return df
+        return box_df
+    
+    
+    
+    def utility(self, x_S, y):
+        return y + sum(x_S)
+
+    def expected_utility(self, x_S, mu_i, sigma_i):
+        samples = np.random.normal(mu_i, sigma_i, 10000)
+        utilities = [self.utility(x_S, sample) for sample in samples]
+        return np.mean(utilities)
+
+    def find_reservation_price(self, c_i, mu_i, sigma_i, x_S):
+        def to_minimize(y):
+            return abs(self.utility(x_S, y) + c_i - self.expected_utility(x_S, mu_i, sigma_i))
+        result = minimize_scalar(to_minimize)
+        if result.success:
+            return result.x
+        else:
+            return None
 
     def solveVideoBoxes(self, vdf):
         # Calculate indices
-        vdf['index'] = vdf['prize'] - vdf['cost']
+                # Initialize list of already opened boxes
+        x_S = []
 
-        total_prize = 0
+        # Initialize total cost
         total_cost = 0
 
-        while len(vdf) > 0:
-            # Find the box with the maximum index
-            max_index_box = vdf['index'].idxmax()
+        # Calculate initial reservation prices
+        vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(row['cost'], row['mean'], row['std_dev'], x_S), axis=1)
 
-            # If the index is positive, open the box
-            if vdf.loc[max_index_box, 'index'] > 0:
-                total_prize += vdf.loc[max_index_box, 'prize']
-                total_cost += vdf.loc[max_index_box, 'cost']
-                vdf.drop(max_index_box, inplace=True)
+        while not vdf.empty:
+            # Find the box with the lowest reservation price
+            min_price_row = vdf.loc[vdf['reservation_price'].idxmin()]
+
+            # If the reservation price is less than or equal to the mean value in the box, open the box
+            if min_price_row['reservation_price'] <= min_price_row['mean']:
+                # Add value in box to list of already opened boxes
+                x_S.append(min_price_row['mean'])
+
+                # Add cost of opening box to total cost
+                total_cost += min_price_row['cost']
+
+                # Remove box from dataframe
+                vdf.drop(min_price_row.name, inplace=True)
+
+                # Update reservation prices for remaining boxes
+                vdf['reservation_price'] = vdf.apply(lambda row: self.find_reservation_price(row['cost'], row['mean'], row['std_dev'], x_S), axis=1)
             else:
-                break
+                # If the reservation price is greater than the mean value in the box, don't open the box
+                vdf.drop(min_price_row.name, inplace=True)
+            
+        total_payoff = sum(x_S) - total_cost
+        return total_payoff
 
-        # print("Total prize:", total_prize)
-        # print("Total cost:", total_cost)
-        
-        net_gain = total_prize - total_cost
-        return net_gain
-
-        # print("Total prize:", total_prize)
-        # print("Total cost:", total_cost)
-        # print("Net gain:", total_prize - total_cost)
-        
+            # print(box_df)
+                
 
     def step(self):
         self.schedule.step()
@@ -186,12 +211,19 @@ class VideoRecommendationsModel(Model):
 
     def compute_average_mimic_search_quality(model):
         mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
-        return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
-    
+        mimic_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
+        if mimic_pop == 0:
+            return 0
+        else:
+            return sum(mimic_search_qualities) / mimic_pop
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
-        return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
+        searcher_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
+        if searcher_pop == 0:
+            return 0
+        else:
+            return sum(searcher_search_qualities) / searcher_pop
     
     def compute_percent_recommended(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]

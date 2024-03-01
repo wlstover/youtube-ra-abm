@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 class Watcher(Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, acuity_floor, recommender_trust_step):
         super().__init__(unique_id, model)
         self.pos = None
         self.past_videos = []
@@ -18,8 +18,10 @@ class Watcher(Agent):
         self.average_payoff = 0
         self.payoff_direction = 0
         self.step_number = 0
-        self.acuity = random.choice(range(30,101))
+        self.acuity_floor = acuity_floor
+        self.acuity = random.choice(range(self.acuity_floor,101))
         self.recommender_trust = random.choice(range(0,101))
+        self.recommender_trust_step = recommender_trust_step
         self.type = random.choice(['searcher', 'mimic'])
         self.patience = 100
         self.search_quality = 0
@@ -148,6 +150,11 @@ class Watcher(Agent):
                     prize = agent.prize
                     cost = agent.cost
                     payoff = prize - cost
+                    if payoff > 0 and agent.recommended == True:
+                        self.recommender_trust += self.recommender_trust_step
+                    elif payoff < 0 and agent.recommended == True:
+                        self.recommender_trust -= self.recommender_trust_step
+
                     self.payoffs.append(payoff)
                   #  print(self.payoffs[-1])
                 

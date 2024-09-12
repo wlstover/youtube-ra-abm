@@ -9,10 +9,10 @@ import pandas as pd
 import itertools
 
 from watcher import Watcher
-from video import Video
+from box import Box
 from recommender import Recommender
         
-class VideoRecommendationsModel(Model):
+class BoxRecommendationsModel(Model):
     def __init__(self, width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step):
         super().__init__()
         self.num_agents = num_agents
@@ -24,7 +24,7 @@ class VideoRecommendationsModel(Model):
         self.mimic_search_quality = 0
         self.percent_recommended = 0
         self.recommender_trust = 0
-        self.video_boxes = self.genVideoBoxes(400)
+        self.box_boxes = self.genBoxBoxes(400)
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
         self.final_payoffs = []
@@ -40,7 +40,7 @@ class VideoRecommendationsModel(Model):
         model_reporters={"mimic_search_quality": self.compute_average_mimic_search_quality,
                             "searcher_search_quality": self.compute_average_searcher_search_quality, 
                             "percent_recommended": self.compute_percent_recommended,
-                            "percent_videos_recommended_chosen": self.compute_percent_videos_recommended_chosen,
+                            "percent_boxs_recommended_chosen": self.compute_percent_boxs_recommended_chosen,
                             "recommender_trust": self.compute_average_recommender_trust},
     )
         
@@ -54,10 +54,10 @@ class VideoRecommendationsModel(Model):
             y = random.randrange(self.grid.height)
             self.grid.place_agent(agent, (x, y))
         
-       # self.video_boxes
-        video_boxes_zip = list(zip(self.video_boxes['prize'], self.video_boxes['cost']))
+       # self.box_boxes
+        box_boxes_zip = list(zip(self.box_boxes['prize'], self.box_boxes['cost']))
         
-       # print(video_boxes_zip)
+       # print(box_boxes_zip)
         x_locations = range(self.grid.width)
         y_locations = range(self.grid.height)
         
@@ -65,33 +65,33 @@ class VideoRecommendationsModel(Model):
         
         #print(grid_locations)
         
-        for i in range(1, (len(video_boxes_zip) + 1)):
+        for i in range(1, (len(box_boxes_zip) + 1)):
             
-            box_values = random.sample(video_boxes_zip, 1)[0]
+            box_values = random.sample(box_boxes_zip, 1)[0]
             uid = (f"box_{i}")
-            video = Video(uid, self, box_values[0], box_values[1])
-            self.schedule.add(video)
+            box = Box(uid, self, box_values[0], box_values[1])
+            self.schedule.add(box)
             
             coords = random.sample(grid_locations, 1)[0] 
             x = coords[0]
             y = coords[1]    
-            self.grid.place_agent(video, (x,y))
+            self.grid.place_agent(box, (x,y))
             
-            video_boxes_zip.remove(box_values)
+            box_boxes_zip.remove(box_values)
             grid_locations.remove(coords)
         
-           # print(len(video_boxes_zip))
+           # print(len(box_boxes_zip))
 
-       # print(self.video_boxes)
-        self.optimal_payoff = self.calculateOptimalSearchValue(self.video_boxes) 
+       # print(self.box_boxes)
+        self.optimal_payoff = self.calculateOptimalSearchValue(self.box_boxes) 
         #print('Optimal payoff is', self.optimal_payoff)
         self.datacollector.collect(self)
         
-    def calculateOptimalSearchValue(self, video_boxes):
-        return self.solveVideoBoxes(video_boxes)
+    def calculateOptimalSearchValue(self, box_boxes):
+        return self.solveBoxBoxes(box_boxes)
 
 
-    def genVideoBoxes(self, n_boxes):
+    def genBoxBoxes(self, n_boxes):
 
         import numpy as np
         import pandas as pd
@@ -124,7 +124,7 @@ class VideoRecommendationsModel(Model):
         #print(df)
         return df
 
-    def solveVideoBoxes(self, vdf):
+    def solveBoxBoxes(self, vdf):
         # Calculate indices
         vdf['index'] = vdf['prize'] - vdf['cost']
 
@@ -172,14 +172,14 @@ class VideoRecommendationsModel(Model):
             agent_pos = agent.__dict__['pos']
             agent_id = agent.__dict__['unique_id']
             #print(f'Agent {agent_id} is at {agent_pos}')
-           # print(type(agent), isinstance(agent, Video))
+           # print(type(agent), isinstance(agent, Box))
            
     def report_Watcher_Final_Payoffs(self):
         return self.final_payoffs
         
-    def report_Video_Box_Values(self):
+    def report_Box_Box_Values(self):
         for a in self.schedule.agents:
-            if isinstance(a, Video):
+            if isinstance(a, Box):
                 agent_pos = a.__dict__['pos']
                 agent_id = a.__dict__['unique_id']
               #  print(agent_id, agent_pos, a.prize, a.cost)
@@ -199,9 +199,9 @@ class VideoRecommendationsModel(Model):
             return 0
 
     def compute_percent_recommended(model):
-        recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]
-        number_of_videos = len([agent for agent in model.schedule.agents if isinstance(agent, Video)])
-        return len(recommended_videos) / number_of_videos
+        recommended_boxs = [agent for agent in model.schedule.agents if isinstance(agent, Box) and agent.recommended == True]
+        number_of_boxs = len([agent for agent in model.schedule.agents if isinstance(agent, Box)])
+        return len(recommended_boxs) / number_of_boxs
     
     def compute_average_recommender_trust(model):
         recommender_trust = [agent.recommender_trust for agent in model.schedule.agents if isinstance(agent, Watcher)]
@@ -210,11 +210,11 @@ class VideoRecommendationsModel(Model):
         except ZeroDivisionError:
             return 0
     
-    def compute_percent_videos_recommended_chosen(model):
-        recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Watcher)]
-        total_videos_chosen = sum([agent.videos_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
-        total_recommended_videos_chosen = sum([agent.recommended_videos_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
-        if total_videos_chosen == 0:
+    def compute_percent_boxs_recommended_chosen(model):
+        recommended_boxs = [agent for agent in model.schedule.agents if isinstance(agent, Watcher)]
+        total_boxs_chosen = sum([agent.boxs_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
+        total_recommended_boxs_chosen = sum([agent.recommended_boxs_chosen_count for agent in model.schedule.agents if isinstance(agent, Watcher)])
+        if total_boxs_chosen == 0:
             return 0
         else:
-            return total_recommended_videos_chosen / total_videos_chosen
+            return total_recommended_boxs_chosen / total_boxs_chosen

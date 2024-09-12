@@ -4,7 +4,7 @@ from mesa.space import MultiGrid
 from mesa.time import RandomActivation
 from mesa.datacollection import DataCollector
 
-from video import Video
+from box import Box
 
 import random
 import numpy as np
@@ -13,7 +13,7 @@ class Watcher(Agent):
     def __init__(self, unique_id, model, acuity_floor, recommender_trust_step):
         super().__init__(unique_id, model)
         self.pos = None
-        self.past_videos = []
+        self.past_boxs = []
         self.payoffs = []
         self.average_payoff = 0
         self.payoff_direction = 0
@@ -22,8 +22,8 @@ class Watcher(Agent):
         self.acuity = random.choice(range(self.acuity_floor,101))
         self.recommender_trust = random.choice(range(0,101))
         self.recommender_trust_step = recommender_trust_step
-        self.recommended_videos_chosen_count = 0
-        self.videos_chosen_count = 0
+        self.recommended_boxs_chosen_count = 0
+        self.boxs_chosen_count = 0
         self.type = random.choice(['searcher', 'mimic'])
         self.patience = 100
         self.search_quality = 0
@@ -70,83 +70,83 @@ class Watcher(Agent):
             moore=True,
             include_center=False)
         
-        possible_steps = [step for step in steps if step not in self.past_videos]
+        possible_steps = [step for step in steps if step not in self.past_boxs]
        # print(f'{len(possible_steps)} possible steps are available in my neighborhood: {possible_steps}')
         if self.type == 'searcher':
             if possible_steps != []:
             
-                possible_videos = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos in possible_steps]
+                possible_boxs = [a for a in self.model.schedule.agents if isinstance(a, Box) and a.pos in possible_steps]
                 
-            #  print(f'Videos in my neighborhood: {possible_videos}')
-                video_payoffs = [(v.prize - v.cost) for v in possible_videos]
-                watcher_video_choice, watcher_weights = self.choose_based_on_acuity(video_payoffs, self.acuity)
-            # print(watcher_video_choice)
+            #  print(f'Boxs in my neighborhood: {possible_boxs}')
+                box_payoffs = [(v.prize - v.cost) for v in possible_boxs]
+                watcher_box_choice, watcher_weights = self.choose_based_on_acuity(box_payoffs, self.acuity)
+            # print(watcher_box_choice)
                 
-                video_choice = [v for v in possible_videos if (v.prize - v.cost) == watcher_video_choice][0]
-                step_choice = [step for step in possible_steps if step == video_choice.pos][0]
+                box_choice = [v for v in possible_boxs if (v.prize - v.cost) == watcher_box_choice][0]
+                step_choice = [step for step in possible_steps if step == box_choice.pos][0]
                 
                 self.get_recommendation(possible_steps)
-                recommended_video = [v for v in possible_videos if v.recommended == True][0]
+                recommended_box = [v for v in possible_boxs if v.recommended == True][0]
                 
-                # for v in possible_videos:
+                # for v in possible_boxs:
                 #     if v.recommended == True:
                 #         print(f'{v.unique_id} at {v.pos} has been recommended by the algorithm')
                         
                 if random.choice(range(1,101)) < self.recommender_trust:
-                    new_position = recommended_video.pos
-                    self.recommended_videos_chosen_count += 1
+                    new_position = recommended_box.pos
+                    self.recommended_boxs_chosen_count += 1
                 # print('Following algorithm recommendation')
                 else:
                     new_position = step_choice
                     
-                self.videos_chosen_count += 1
+                self.boxs_chosen_count += 1
                 # print('Going with my choice')
                             
                 # new_position = random.choice(possible_steps)
                 self.model.grid.move_agent(self, new_position)
-                video = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos == new_position][0]
-                video.opened = True
+                box = [a for a in self.model.schedule.agents if isinstance(a, Box) and a.pos == new_position][0]
+                box.opened = True
             #   print(f'Moving agent {self} to {new_position}')
-                self.past_videos.append(new_position)
+                self.past_boxs.append(new_position)
                 
             else:
-            # print('Run out of videos to search and will remove myself from schedule')
+            # print('Run out of boxs to search and will remove myself from schedule')
                 #new_position = self.pos
                 pass
         else:
             if possible_steps != []:
-                possible_videos = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos in possible_steps]
-                video_payoffs = [(v.prize - v.cost) for v in possible_videos]
-                watcher_video_choice, watcher_weights = self.choose_based_on_acuity(video_payoffs, self.acuity)
+                possible_boxs = [a for a in self.model.schedule.agents if isinstance(a, Box) and a.pos in possible_steps]
+                box_payoffs = [(v.prize - v.cost) for v in possible_boxs]
+                watcher_box_choice, watcher_weights = self.choose_based_on_acuity(box_payoffs, self.acuity)
                 
-                video_likes = [v.likes for v in possible_videos]
-                if sum(video_likes) == 0:
-                    video_choice = random.choice(possible_videos)
+                box_likes = [v.likes for v in possible_boxs]
+                if sum(box_likes) == 0:
+                    box_choice = random.choice(possible_boxs)
                 else:
-                    max_likes = max(video_likes)
-                    max_liked_video = [v for v in possible_videos if v.likes == max_likes][0]
-                    video_choice = max_liked_video
+                    max_likes = max(box_likes)
+                    max_liked_box = [v for v in possible_boxs if v.likes == max_likes][0]
+                    box_choice = max_liked_box
                 
-                step_choice = [step for step in possible_steps if step == video_choice.pos][0]
+                step_choice = [step for step in possible_steps if step == box_choice.pos][0]
                 new_position = step_choice
                 self.model.grid.move_agent(self, new_position)
-                video = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos == new_position][0]
-                video.opened = True
-                self.past_videos.append(new_position)
+                box = [a for a in self.model.schedule.agents if isinstance(a, Box) and a.pos == new_position][0]
+                box.opened = True
+                self.past_boxs.append(new_position)
             else:
                 pass
             
         self.step_number += 1
         
        
-    def open_video_box(self):
+    def open_box_box(self):
         x,y = self.pos
         agent_counter = 0
         for agent in self.model.schedule.agents:
-            if isinstance(agent, Video):
+            if isinstance(agent, Box):
                 if agent.pos == self.pos:
                     
-                    # Checking to make sure each cell is popualted only with one video
+                    # Checking to make sure each cell is popualted only with one box
                  #   print(f"This is box {agent_counter} that i have found here at {agent.pos}")
                     agent_counter += 1
                     
@@ -191,13 +191,13 @@ class Watcher(Agent):
                 self.payoff_direction = -1  
             elif self.average_payoff > self.past_average_payoff and self.payoff_direction >= 0:
                 self.payoff_direction += 1
-                self.like_last_video()
+                self.like_last_box()
             elif self.average_payoff < self.past_average_payoff and self.payoff_direction <= 0:
                 self.payoff_direction -= 1
                 
-    def like_last_video(self):
-        last_video = [a for a in self.model.schedule.agents if isinstance(a, Video) and a.pos == self.past_videos[-1]][0]
-        last_video.likes += 1
+    def like_last_box(self):
+        last_box = [a for a in self.model.schedule.agents if isinstance(a, Box) and a.pos == self.past_boxs[-1]][0]
+        last_box.likes += 1
                 
     def calculate_stopping_point(self):
             
@@ -205,10 +205,10 @@ class Watcher(Agent):
             self.pos,
             moore=True,
             include_center=False)
-        possible_steps = [step for step in steps if step not in self.past_videos]
+        possible_steps = [step for step in steps if step not in self.past_boxs]
         
         if possible_steps == []:
-            #print("I've run out of videos in my neighborhood to search, so I'm all done.")
+            #print("I've run out of boxs in my neighborhood to search, so I'm all done.")
             self.model.final_payoffs.append([sum(self.payoffs), self.unique_id, self.patience, self.step_number, self.acuity, self.recommender_trust, self.model.recommender_acuity, self.type, self.search_quality, self.searcher_search_quality, self.mimic_search_quality])
             self.model.schedule.remove(self)
         
@@ -232,7 +232,7 @@ class Watcher(Agent):
     def step(self):
         self.calculate_stopping_point()
         self.move()
-        self.open_video_box()
+        self.open_box_box()
         self.calculate_average_payoff()
         self.calculate_payoff_direction()
         self.calculate_search_quality()

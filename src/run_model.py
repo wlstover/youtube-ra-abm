@@ -1,4 +1,4 @@
-from video_recommendations import VideoRecommendationsModel, Watcher
+from box_recommendations import BoxRecommendationsModel, Watcher
 import pandas as pd
 
 
@@ -8,9 +8,9 @@ if __name__ == "__main__":
     num_agents = 10
     num_steps = 20
     
-    video_values = [i for i in range(1, 201)]
-    search_costs = [(101 - i) for i in video_values]
-    video_boxes = list(zip(video_values, search_costs))
+    box_values = [i for i in range(1, 201)]
+    search_costs = [(101 - i) for i in box_values]
+    box_boxes = list(zip(box_values, search_costs))
     
     agent_payoff_df = pd.DataFrame(columns=['final_payoff', 'uid', 'patience', 'step_number', 'acuity', 'recommender_trust', 'recommender_hv', 'recommender_random',  'optimal_search_value'])
     
@@ -19,12 +19,12 @@ if __name__ == "__main__":
     recommender_trust_step = 0.1
     agent_acuity_floor = 50
 
-    model = VideoRecommendationsModel(width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step)
+    model = BoxRecommendationsModel(width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step)
 
     while model.running == True:
         for i in range(num_steps):
             if any(isinstance(a, Watcher) for a in model.schedule.agents):
-                #model.report_Video_Box_Values()
+                #model.report_Box_Box_Values()
                 #model.report_Agent_Locations()
             # print(f'Stepping model to step {i}')
                 model.step()
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                 #print('Agent has stopped searching, breaking the model')
                 model.running = False
 
-    # optimal_search_value = model.calculateOptimalSearchValue(model.video_boxes)
+    # optimal_search_value = model.calculateOptimalSearchValue(model.box_boxes)
     agent_payoffs = model.report_Watcher_Final_Payoffs()
     agent_payoff_treatment_df = pd.DataFrame(agent_payoffs, columns=['final_payoff', 'uid', 'patience', 'step_number', 'acuity', 'recommender_trust', 'recommender_hv', 'recommender_random', 'watcher_type', 'search_quality', 'mimic_search_quality'])
     agent_payoff_treatment_df['searcher_type'] = agent_payoff_treatment_df['watcher_type'].apply(lambda x: 1 if x == 'searcher' else 2)

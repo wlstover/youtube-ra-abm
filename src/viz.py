@@ -2,7 +2,7 @@ from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import ChartModule
 
-from video_recommendations import VideoRecommendationsModel, Watcher
+from box_recommendations import BoxRecommendationsModel, Watcher
 import solara
 
 # Define the visualization elements
@@ -37,14 +37,14 @@ num_steps = 20
 agent_search_cost = 10
 recommender_trust_step = 1
 
-video_values = [i for i in range(1, 201)]
-search_costs = [(101 - i) for i in video_values]
-video_boxes = list(zip(video_values, search_costs))
+box_values = [i for i in range(1, 201)]
+search_costs = [(101 - i) for i in box_values]
+box_boxes = list(zip(box_values, search_costs))
 
 treatment = 'high_value'
 
 # Create a single model instance 
-# model = VideoRecommendationsModel(width, height, num_agents, treatment)
+# model = BoxRecommendationsModel(width, height, num_agents, treatment)
 
 # Create the visualization
 grid = CanvasGrid(agent_portrayal, width, height, 500, 500)
@@ -92,9 +92,9 @@ model_params = {
 "height": 20
 }
 
-server = ModularServer(VideoRecommendationsModel,
+server = ModularServer(BoxRecommendationsModel,
                        [grid, chart],
-                       "Video Recommendations Model",
+                       "Box Recommendations Model",
                        model_params=model_params)
 
 # Start the server

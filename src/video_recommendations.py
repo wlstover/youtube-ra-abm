@@ -186,8 +186,10 @@ class VideoRecommendationsModel(Model):
 
     def compute_average_mimic_search_quality(model):
         mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
-        return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
-    
+        try:
+            return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
+        except ZeroDivisionError:
+            return 0    
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']

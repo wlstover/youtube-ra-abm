@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 import itertools
 
-from watcher import Watcher
-from box import Box
-from recommender import Recommender
+from agents import Watcher
+from agents import Box
+from agents import Recommender
         
 class BoxRecommendationsModel(Model):
     def __init__(self, width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step):

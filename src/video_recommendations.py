@@ -186,21 +186,12 @@ class VideoRecommendationsModel(Model):
 
     def compute_average_mimic_search_quality(model):
         mimic_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic']
-        mimic_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
-        if mimic_pop == 0:
-            return 0
-        else:
-            return sum(mimic_search_qualities) / mimic_pop
+        return sum(mimic_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'mimic'])
     
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
-        searcher_pop = len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
-        
-        if searcher_pop == 0:
-            return 0
-        else:
-            return sum(searcher_search_qualities) / searcher_pop
+        return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
     
     def compute_percent_recommended(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]
@@ -209,7 +200,10 @@ class VideoRecommendationsModel(Model):
     
     def compute_average_recommender_trust(model):
         recommender_trust = [agent.recommender_trust for agent in model.schedule.agents if isinstance(agent, Watcher)]
-        return (sum(recommender_trust) / len(recommender_trust)) / 100
+        try:
+            return (sum(recommender_trust) / len(recommender_trust)) / 100
+        except ZeroDivisionError:
+            return 0
     
     def compute_percent_videos_recommended_chosen(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Watcher)]

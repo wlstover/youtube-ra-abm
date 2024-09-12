@@ -2,3 +2,8 @@
 *.do
 *.rtf
 __pycache__/*
+*.pyc
+*.log
+.venv/*
+outputs/*
+*.pptx

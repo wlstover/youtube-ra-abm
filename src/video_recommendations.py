@@ -193,8 +193,11 @@ class VideoRecommendationsModel(Model):
     
     def compute_average_searcher_search_quality(model):
         searcher_search_qualities = [agent.search_quality for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher']
-        return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
-    
+        try:
+            return sum(searcher_search_qualities) / len([agent for agent in model.schedule.agents if isinstance(agent, Watcher) and agent.type == 'searcher'])
+        except ZeroDivisionError:
+            return 0
+
     def compute_percent_recommended(model):
         recommended_videos = [agent for agent in model.schedule.agents if isinstance(agent, Video) and agent.recommended == True]
         number_of_videos = len([agent for agent in model.schedule.agents if isinstance(agent, Video)])

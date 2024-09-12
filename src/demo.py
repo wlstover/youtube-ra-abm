@@ -4,6 +4,7 @@ from mesa.visualization.modules import ChartModule
 
 from model import BoxRecommendationsModel, Watcher
 import solara
+from mesa.experimental import JupyterViz
 
 # Define the visualization elements
 # Define the visualization elements
@@ -49,16 +50,16 @@ model = BoxRecommendationsModel(width, height, num_agents, treatment)
 # Create the visualization
 grid = CanvasGrid(agent_portrayal, width, height, 500, 500)
 
-chart = ChartModule([{"Label": "searcher_search_quality",
-                      "Color": "Red"},
-                      {"Label": "mimic_search_quality",
-                       "Color": "Black"}],
-                    data_collector_name='datacollector')
+chart = ChartModule([{"Label": "search_quality",
+                      "Color": "Red"}],
+                data_collector_name="datacollector")
 
 server = ModularServer(BoxRecommendationsModel,
                        [grid, chart],
                        "Box Recommendations Model",
                        {"width": width, "height": height, "num_agents": num_agents, "recommender_type": treatment})
 
-# Start the server
-server.launch()
+# # Start the server
+# server.launch()
+
+page = JupyterViz(model, agent_portrayal,)

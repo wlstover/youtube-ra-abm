@@ -1,4 +1,11 @@
 from mesa import Agent, Model
+from mesa.space import MultiGrid
+from mesa.time import RandomActivation
+from mesa.datacollection import DataCollector
+
+import random
+import numpy as np
+
 
 class Box(Agent):
     def __init__(self, unique_id, model, prize, cost):
@@ -9,26 +16,6 @@ class Box(Agent):
         self.opened = False
         self.recommended = False
         self.likes = 0
-
-
-from mesa import Agent, Model
-from mesa.space import MultiGrid
-from mesa.time import RandomActivation
-from mesa.datacollection import DataCollector
-
-import random
-import numpy as np
-from agents import Box
-
-from mesa import Agent, Model
-from mesa.space import MultiGrid
-from mesa.time import RandomActivation
-from mesa.datacollection import DataCollector
-
-from agents import Box
-
-import random
-import numpy as np
 
 
 class Recommender(Agent):
@@ -84,6 +71,7 @@ class Recommender(Agent):
                 
     def step(self):
         self.generate_recommendation()
+
 
 class Watcher(Agent):
     def __init__(self, unique_id, model, acuity_floor, recommender_trust_step):

@@ -23,6 +23,8 @@ if __name__ == "__main__":
 
     model = BoxRecommendationsModel(width, height, num_agents, agent_acuity_floor, recommender_acuity, recommender_trust_step)
 
+    agent_payoffs = []
+
     while model.running == True:
         for i in range(num_steps):
             if any(isinstance(a, Watcher) for a in model.schedule.agents):
@@ -36,24 +38,30 @@ if __name__ == "__main__":
                 model.running = False
 
     # optimal_search_value = model.calculateOptimalSearchValue(model.box_boxes)
-    agent_payoffs = model.report_Watcher_Final_Payoffs()
-    agent_payoff_treatment_df = pd.DataFrame(agent_payoffs, columns=['final_payoff', 
-                                                                     'uid', 
-                                                                     'patience', 
-                                                                     'step_number', 
-                                                                     'acuity', 
-                                                                     'recommender_trust', 
-                                                                     'recommender_acuity', 
-                                                                     'agent_type', 
-                                                                     'search_quality', 
-                                                                     'searcher_search_quality',
-                                                                     'mimic_search_quality'])
+            if i % 10 == 0:
+                agent_payoffs.append(model.report_Watcher_Final_Payoffs())
+
+    print(agent_payoffs[0])
+
+    payoff_df = pd.DataFrame(agent_payoffs[0],
+                             columns=['final_payoff', 
+                                        'uid', 
+                                        'patience', 
+                                        'step_number', 
+                                        'acuity', 
+                                        'recommender_trust', 
+                                        'recommender_acuity', 
+                                        'agent_type', 
+                                        'search_quality', 
+                                        'searcher_search_quality',
+                                        'mimic_search_quality'])
+
     
     # agent_payoff_treatment_df['agent_type'] = agent_payoff_treatment_df['agent_type'].apply(lambda x: 1 if x == 'searcher' else 2)
     # agent_payoff_treatment_df['optimal_search_value'] = optimal_search_value
-    agent_payoff_df = pd.concat([agent_payoff_df, agent_payoff_treatment_df])
+    # agent_payoff_df = pd.concat([agent_payoff_df, agent_payoff_treatment_df])
 
-    agent_payoff_df.to_csv(outputs_dir / 'recommender_abm_results.csv')
+    payoff_df.to_csv(outputs_dir / 'recommender_abm_results.csv')
     # agent_payoff_df.to_csv('recommender_abm_results.csv')
                 
             #print(f'Iterating model to step {i}')

@@ -1,6 +1,8 @@
-from box_recommendations import BoxRecommendationsModel, Watcher
+from model import BoxRecommendationsModel, Watcher
 import pandas as pd
+from pathlib import Path
 
+outputs_dir = Path("../outputs")
 
 if __name__ == "__main__":
     width = 20
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     # agent_payoff_treatment_df['optimal_search_value'] = optimal_search_value
     agent_payoff_df = pd.concat([agent_payoff_df, agent_payoff_treatment_df])
 
-    agent_payoff_df.to_csv('recommender_abm_results.csv')
+    agent_payoff_df.to_csv(outputs_dir / 'recommender_abm_results.csv')
                 
             #print(f'Iterating model to step {i}')
 

@@ -2,7 +2,7 @@ from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import ChartModule
 
-from box_recommendations import BoxRecommendationsModel, Watcher
+from model import BoxRecommendationsModel, Watcher
 import solara
 
 # Define the visualization elements

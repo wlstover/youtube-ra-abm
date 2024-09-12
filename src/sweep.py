@@ -1,4 +1,4 @@
-from box_recommendations import BoxRecommendationsModel, Watcher
+from model import BoxRecommendationsModel, Watcher
 import pandas as pd
 
 
